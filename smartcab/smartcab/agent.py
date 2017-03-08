@@ -4,11 +4,14 @@ from environment import Agent, Environment
 from planner import RoutePlanner
 from simulator import Simulator
 
+# Set random seed
+random.seed(0)
+
 class LearningAgent(Agent):
     """ An agent that learns to drive in the Smartcab world.
         This is the object you will be modifying. """ 
 
-    def __init__(self, env, learning=False, epsilon=1.0, alpha=0.5):
+    def __init__(self, env, learning=False, epsilon=1.0, alpha=0.2):
         super(LearningAgent, self).__init__(env)     # Set the agent in the evironment 
         self.planner = RoutePlanner(self.env, self)  # Create a route planner
         self.valid_actions = self.env.valid_actions  # The set of valid actions
@@ -23,6 +26,7 @@ class LearningAgent(Agent):
         ## TO DO ##
         ###########
         # Set any additional class parameters as needed
+        self.num_simulations = 0
 
 
     def reset(self, destination=None, testing=False):
@@ -46,8 +50,13 @@ class LearningAgent(Agent):
         else:
             #self.epsilon = self.epsilon - 0.05
             #self.epsilon = 1./math.pow((math.sqrt(1./self.epsilon) + 1.), 2)
-            a = 0.98; self.epsilon = self.epsilon * a
-
+            #a = 0.98; self.epsilon = self.epsilon * a
+            self.num_simulations += 1
+            if (self.num_simulations < 300):
+                self.epsilon = 1.0
+            else:
+                a = 0.98
+                self.epsilon = self.epsilon * a
         return None
 
     def build_state(self):
@@ -100,7 +109,7 @@ class LearningAgent(Agent):
         
         if self.learning == True:
             if state not in self.Q.keys():
-                self.Q[state] = {None: 0, 'forward': 0, 'left': 0, 'right': 0}
+                self.Q[state] = {action: 0.0 for action in self.valid_actions}
 
         return
 
@@ -129,7 +138,7 @@ class LearningAgent(Agent):
             else:
                 #Qmax = self.get_maxQ(state)
                 #action = [x for x, y in self.Q[state].items() if y == Qmax]
-                action = [x for x, y in self.Q[state].items() if y == self.get_maxQ(state)][0]
+                action = random.choice([x for x, y in self.Q[state].items() if y == self.get_maxQ(state)])
 
         return action
 
@@ -214,7 +223,7 @@ def run():
     #   n_test     - discrete number of testing trials to perform, default is 0
     
     #sim.run()
-    sim.run(n_test=10, tolerance = 0.001)
+    sim.run(n_test=10, tolerance = 0.0001)
 
 
 if __name__ == '__main__':
